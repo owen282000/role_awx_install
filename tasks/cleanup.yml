@@ -1,0 +1,19 @@
+- name: Remove backup tar files from local storage
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ persistent_container_storage_dir }}/awx/postgres_backup.tar.gz"
+    - "{{ persistent_container_storage_dir }}/awx/projects_backup.tar.gz"
+  when: backup_restore_data | default(false) | bool
+
+- name: Remove old Helm installation script
+  ansible.builtin.file:
+    path: "/root/k3s_install.sh"
+    state: absent
+
+- name: Remove /tmp/awx directory
+  ansible.builtin.file:
+    path: "/tmp/awx"
+    state: absent
+    recurse: true

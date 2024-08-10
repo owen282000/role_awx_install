@@ -1,0 +1,28 @@
+---
+- name: Install required packages on Ubuntu/Debian
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  loop:
+    - git
+    - make
+    - ufw
+    - podman
+    - python3-pip
+
+- name: Start and enable UFW
+  ansible.builtin.service:
+    name: ufw
+    state: started
+    enabled: true
+
+- name: Allow necessary ports in UFW
+  ansible.builtin.ufw:
+    rule: allow
+    port: "{{ item }}"
+  loop:
+    - '22'
+    - '80'
+    - '443'
+...

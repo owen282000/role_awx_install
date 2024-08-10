@@ -1,0 +1,19 @@
+---
+# defaults file for role_awx_install
+
+# General variables
+awx_namespace: "awx"  # Namespace where AWX will be deployed
+bastion_install_dir: "/tmp/awx"  # Location on the bastion host where files will be stored
+persistent_container_storage_dir: "/srv/containers"  # Directory where persistent storage will be mounted
+
+# AWX Operator version
+#awx_operator_version: "2.19.1"  # Version of the AWX Operator to be installed // Not defined means latest
+
+# K3S Install
+k3s_install: false # Set to true to install k3s
+
+# Backup and restore options
+backup_restore_data: false  # Set to true to enable backup and restore functionality
+
+# Namespace deletion
+delete_ns: false  # Set to true to delete the namespace and persistent volumes before redeploying

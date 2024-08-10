@@ -1,0 +1,205 @@
+---
+- name: Ensure all required variables are set
+  ansible.builtin.assert:
+    that:
+      - bastion_install_dir is defined
+      - persistent_container_storage_dir is defined
+      - awx_namespace is defined
+    fail_msg: "One or more required variables are missing. Please define 'bastion_install_dir', 'persistent_container_storage_dir', and 'awx_namespace'."
+    success_msg: "All required variables are set."
+
+- name: Set AWX Operator version if not defined
+  block:
+    - name: Fetch tags from AWX Operator repository
+      ansible.builtin.uri:
+        url: "https://api.github.com/repos/ansible/awx-operator/tags"
+        return_content: yes
+      register: awx_tags_response
+
+    - name: Use the latest AWX Operator version
+      set_fact:
+        awx_operator_version: >-
+          {{
+            awx_tags_response.json | map(attribute='name') | map('split', '.') |
+            map('map', 'int') | sort(reverse=True) | map('join', '.') | first
+          }}
+  when: awx_operator_version is not defined
+
+- name: Include Backup and Restore specific tasks
+  include_tasks: backup_restore_non_persistent.yml
+  when: backup_restore_data | default(false) | bool
+
+- name: Include RedHat specific tasks
+  include_tasks: redhat.yml
+  when: ansible_os_family == "RedHat"
+
+- name: Include Ubuntu specific tasks
+  include_tasks: ubuntu.yml
+  when: ansible_os_family == "Debian"
+
+- name: Include K3S specific tasks
+  include_tasks: k3s.yml
+  when: k3s_install | default(false) | bool
+
+- name: Remove AWX namespace and persistent volumes
+  block:
+    - name: Delete AWX namespace
+      kubernetes.core.k8s:
+        state: absent
+        kind: Namespace
+        name: "{{ awx_namespace }}"
+
+    - name: Delete persistent volumes
+      kubernetes.core.k8s:
+        state: absent
+        kind: PersistentVolume
+        name: "{{ item }}"
+      loop:
+        - awx-postgres-pv
+        - awx-projects-pv
+      ignore_errors: true
+  when: delete_ns | default(false) | bool
+
+- name: Create necessary directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ bastion_install_dir }}/awx/kustomize/"
+    - "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
+    - "{{ persistent_container_storage_dir }}/awx/projects"
+
+- name: Set permissions for AWX postgres directory
+  ansible.builtin.file:
+    path: "{{ persistent_container_storage_dir }}/awx/postgres-15"
+    mode: '0755'
+    recurse: yes
+
+- name: Set ownership for AWX postgres userdata directory
+  ansible.builtin.file:
+    path: "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
+    owner: 26
+    group: 26
+    mode: '0700'
+    recurse: yes
+
+- name: Set ownership for AWX project directory
+  ansible.builtin.file:
+    path: "{{ persistent_container_storage_dir }}/awx/projects"
+    owner: 1000
+    group: 0
+    mode: '0755'
+    recurse: yes
+
+- name: Clone AWX Operator repository
+  ansible.builtin.git:
+    repo: 'https://github.com/ansible/awx-operator.git'
+    dest: '/root/awx-operator'
+    version: "tags/{{ awx_operator_version }}"
+    force: yes
+
+- name: Create Kubernetes namespace for AWX
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ awx_namespace }}"
+
+- name: Add script to get AWX Helm templates
+  ansible.builtin.template:
+    src: "get_new_awx_templates.sh.j2"
+    dest: "{{ bastion_install_dir }}/awx/get_new_awx_templates.sh"
+    mode: '0755'
+
+- name: Run script to get AWX Helm templates
+  ansible.builtin.shell: |
+    "{{ bastion_install_dir }}/awx/get_new_awx_templates.sh"
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Remove script after execution
+  ansible.builtin.file:
+    path: "{{ bastion_install_dir }}/awx/get_new_awx_templates.sh"
+    state: absent
+
+- name: Find template files
+  ansible.builtin.find:
+    paths: "{{ bastion_install_dir }}/awx/kustomize/awx-operator/templates/"
+    patterns: "*.yaml"
+  register: template_files
+
+- name: Copy kustomization files
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ bastion_install_dir }}/awx/kustomize/{{ item.dest }}"
+  loop:
+    - { src: "templates/kustomization/pvc.yaml.j2", dest: "pvc.yaml" }
+    - { src: "templates/kustomization/pv.yaml.j2", dest: "pv.yaml" }
+    - { src: "templates/kustomization/storageclass.yaml.j2", dest: "storageclass.yaml" }
+    - { src: "templates/kustomization/awx.yaml.j2", dest: "awx.yaml" }
+    - { src: "templates/kustomization/kustomization.yaml.j2", dest: "kustomization.yaml" }
+    - { src: "templates/kustomization/namespace.yaml.j2", dest: "namespace.yaml" }
+
+- name: Add template files to kustomization.yaml
+  ansible.builtin.template:
+    src: "templates/kustomization/kustomization.yaml.j2"
+    dest: "{{ bastion_install_dir }}/awx/kustomize/kustomization.yaml"
+  when: template_files.matched > 0
+
+- name: Install AWX CRDs
+  ansible.builtin.command:
+    cmd: kubectl apply -f {{ item }}
+  loop:
+    - https://raw.githubusercontent.com/ansible/awx-operator/devel/config/crd/bases/awx.ansible.com_awxs.yaml
+    - https://raw.githubusercontent.com/ansible/awx-operator/devel/config/crd/bases/awx.ansible.com_awxbackups.yaml
+    - https://raw.githubusercontent.com/ansible/awx-operator/devel/config/crd/bases/awx.ansible.com_awxrestores.yaml
+    - https://raw.githubusercontent.com/ansible/awx-operator/devel/config/crd/bases/awx.ansible.com_awxmeshingresses.yaml
+
+- name: Deploy AWX
+  ansible.builtin.command:
+    cmd: "kubectl apply -k {{ bastion_install_dir }}/awx/kustomize"
+
+- name: Wait for AWX instance to be ready
+  ansible.builtin.shell: |
+    until kubectl get pods -n "awx" -l app.kubernetes.io/name=awx-web -o jsonpath='{.items[*].status.phase}' | grep -q 'Running'; do
+      echo "Waiting for AWX instance to be ready...";
+      sleep 30;
+    done
+  register: awx_instance_ready
+  retries: 75
+  delay: 30
+  until: awx_instance_ready is success
+
+- name: Retrieve AWX admin password
+  ansible.builtin.shell: |
+    kubectl get secret awx-admin-password -n "{{ awx_namespace }}" -o jsonpath="{.data.password}" | base64 -d
+  register: awx_admin_password
+  changed_when: false
+
+- name: Retrieve NodePort of AWX service
+  ansible.builtin.shell: |
+    kubectl get service awx-service -n "{{ awx_namespace }}" -o jsonpath="{.spec.ports[0].nodePort}"
+  register: awx_service_port
+  changed_when: false
+
+- name: Save AWX access details to a file
+  ansible.builtin.copy:
+    dest: "/tmp/awx_access_details.txt"
+    content: |
+      AWX admin password: {{ awx_admin_password.stdout }}
+      AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port.stdout }}
+    mode: '0644'
+
+- name: Debug the content to be saved in the file
+  debug:
+    msg: |
+      AWX admin password: {{ awx_admin_password.stdout }}
+      AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port.stdout }}
+      Credentials saved in /tmp/awx_access_details.txt
+
+- name: Cleanup temporary files and resources
+  include_tasks: cleanup.yml
+...

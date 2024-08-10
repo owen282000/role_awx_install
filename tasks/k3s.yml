@@ -1,0 +1,55 @@
+---
+- name: Download k3s installation script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io/
+    dest: /root/k3s_install.sh
+    mode: '0755'
+
+- name: Install k3s
+  ansible.builtin.command:
+    cmd: /root/k3s_install.sh --write-kubeconfig-mode 644 --selinux --kubelet-arg "container-log-max-files=4" --kubelet-arg "container-log-max-size=50Mi"
+    creates: /etc/rancher/k3s/k3s.yaml
+  environment:
+    INSTALL_K3S_BIN_DIR: /usr/bin
+
+- name: Install Kubernetes Python library
+  ansible.builtin.pip:
+    name: kubernetes
+    state: present
+
+- name: Create /root/.kube directory
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+
+- name: Copy Kubeconfig to home directory
+  ansible.builtin.command:
+    cmd: cp /etc/rancher/k3s/k3s.yaml /root/.kube/config
+
+- name: Execute script to get new AWX Helm version
+  ansible.builtin.shell: |
+    "/usr/bin/helm version" 
+  register: helm_installed
+  ignore_errors: true
+  changed_when: false
+  become: true
+
+- block:
+    - name: Download Helm command line tool
+      ansible.builtin.uri:
+        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        return_content: true
+      register: helm_installer
+
+    - name: Install Helm
+      ansible.builtin.command:
+        cmd: bash
+        stdin: "{{ helm_installer.content }}"
+        creates: /usr/local/bin/helm
+
+    - name: Copy Helm binary to /usr/bin
+      ansible.builtin.command: "ln /usr/local/bin/helm /usr/bin/helm"
+      args:
+        creates: /usr/bin/helm
+  when: helm_installed.failed
+...

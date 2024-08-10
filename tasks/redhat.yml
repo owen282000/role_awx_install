@@ -1,0 +1,32 @@
+---
+- name: Install required packages on RedHat/CentOS
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - epel-release
+    - git
+    - make
+    - firewalld
+    - podman
+    - python3-pip
+
+- name: Start and enable firewalld
+  ansible.builtin.service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Ensure firewalld uses iptables instead of nftables
+  ansible.builtin.lineinfile:
+    path: /etc/firewalld/firewalld.conf
+    regexp: "^FirewallBackend"
+    line: "FirewallBackend=iptables"
+
+- name: Restart firewalld
+  ansible.builtin.service:
+    name: firewalld
+    state: restarted
+
+- name: Restore SELinux context on RedHat/CentOS
+  ansible.builtin.command: "restorecon -Rv -F {{ persistent_container_storage_dir }}/awx"
