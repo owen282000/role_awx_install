@@ -36,8 +36,9 @@ galaxy_info:
     - automation
     - devops
 
-dependencies:
-  collections:
-    - community.general
-    - kubernetes.core
-    - community.kubernetes
+dependencies: []
+
+collections:
+  - community.general
+  - kubernetes.core
+  - community.kubernetes
