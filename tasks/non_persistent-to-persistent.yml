@@ -1,0 +1,45 @@
+---
+- name: Get list of AWX pods
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ awx_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/name=awx-web"
+  register: awx_pods
+
+- name: Tar PostgreSQL data in the pod
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ item.metadata.name }}"
+    command: "tar czf /tmp/postgres_backup.tar.gz -C /var/lib/postgresql/data ."
+  loop: "{{ awx_pods.resources }}"
+  when: item.metadata.name is search('postgres')
+
+- name: Tar project data in the pod
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ item.metadata.name }}"
+    command: "tar czf /tmp/projects_backup.tar.gz -C /var/lib/awx/projects ."
+  loop: "{{ awx_pods.resources }}"
+  when: item.metadata.name is search('awx-web')
+
+- name: Copy PostgreSQL backup to local machine
+  command: >
+    kubectl cp {{ awx_namespace }}/{{ item.metadata.name }}:/tmp/postgres_backup.tar.gz {{ persistent_container_storage_dir }}/awx/postgres_backup.tar.gz
+  loop: "{{ awx_pods.resources }}"
+  when: item.metadata.name is search('postgres')
+
+- name: Copy projects backup to local machine
+  command: >
+    kubectl cp {{ awx_namespace }}/{{ item.metadata.name }}:/tmp/projects_backup.tar.gz {{ persistent_container_storage_dir }}/awx/projects_backup.tar.gz
+  loop: "{{ awx_pods.resources }}"
+  when: item.metadata.name is search('awx-web')
+
+- name: Extract PostgreSQL backup to PV
+  ansible.builtin.shell: |
+    tar xzf {{ persistent_container_storage_dir }}/awx/postgres_backup.tar.gz -C {{ persistent_container_storage_dir }}/awx/postgres-15/data
+
+- name: Extract projects backup to PV
+  ansible.builtin.shell: |
+    tar xzf {{ persistent_container_storage_dir }}/awx/projects_backup.tar.gz -C {{ persistent_container_storage_dir }}/awx/projects
+...
