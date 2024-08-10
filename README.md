@@ -1,4 +1,4 @@
-role_awx_install
+Role AWX Install
 =========
 
 This Ansible role is designed to install and configure AWX on a Kubernetes cluster, with a focus on using K3s and enabling persistent storage. It includes options for backup and restore, automatic deployment, and customization based on your Kubernetes environment.
@@ -48,6 +48,7 @@ This role depends on the following Ansible collections:
 Ensure these collections are installed before running the role.
 
 Example Playbook
+---------
 ```yaml
 ---
 - hosts: awx
