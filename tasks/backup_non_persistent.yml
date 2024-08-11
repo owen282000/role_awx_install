@@ -44,14 +44,12 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "mkdir -p /tmp/awx_backup"
 
 - name: Backup credentials
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: >
       pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_credential -t main_credentialinputsource -t main_credentialtype --data-only -f /tmp/awx_backup/credentials.sql
 
@@ -59,7 +57,6 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: >
       pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_project -t main_projectupdate -t main_projectupdateevent --data-only -f /tmp/awx_backup/projects.sql
 
@@ -67,7 +64,6 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: >
       pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_jobtemplate -t main_workflowjobtemplate -t main_workflowjobtemplatenode --data-only -f /tmp/awx_backup/job_templates.sql
 
@@ -75,7 +71,6 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: >
       pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_executionenvironment --data-only -f /tmp/awx_backup/execution_environments.sql
 
@@ -83,7 +78,6 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: >
       pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_inventory -t main_inventorysource -t main_host -t main_group --data-only -f /tmp/awx_backup/inventories_hosts.sql
 
@@ -91,7 +85,6 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "tar czf /tmp/awx_backup.tar.gz -C /tmp/awx_backup ."
 
 - name: Copy backup archive from the container to local machine

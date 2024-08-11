@@ -20,41 +20,35 @@
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "tar xzf /tmp/awx_backup.tar.gz -C /tmp/awx_backup"
 
 - name: Restore credentials
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "psql -U awx -d awx -f /tmp/awx_backup/credentials.sql"
 
 - name: Restore projects
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "psql -U awx -d awx -f /tmp/awx_backup/projects.sql"
 
 - name: Restore job templates
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "psql -U awx -d awx -f /tmp/awx_backup/job_templates.sql"
 
 - name: Restore execution environments
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "psql -U awx -d awx -f /tmp/awx_backup/execution_environments.sql"
 
 - name: Restore inventories and hosts
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    container: "postgresql"
     command: "psql -U awx -d awx -f /tmp/awx_backup/inventories_hosts.sql"
 ...
