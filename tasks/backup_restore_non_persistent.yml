@@ -25,16 +25,20 @@
     podname_postgres: "{{ item.metadata.name }}"
   loop: "{{ awx_pods2.resources }}"
 
+- debug:
+    var: podname
+
 - name: Tar PostgreSQL data in the pod
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    command: "tar czf /tmp/postgres_backup.tar.gz -C /var/lib/postgresql/data ."
+    command: "tar czf /tmp/postgres_backup.tar.gz -C /var/lib/pgsql/data/userdata ."
 
 - name: Tar project data in the pod
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname }}"
+    container: "awx-task" 
     command: "tar czf /tmp/projects_backup.tar.gz -C /var/lib/awx/projects ."
 
 - name: Copy PostgreSQL backup to local machine

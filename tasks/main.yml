@@ -25,6 +25,37 @@
           }}
   when: awx_operator_version is not defined
 
+- name: Create necessary directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+  loop:
+    - "{{ bastion_install_dir }}/awx/kustomize/"
+    - "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
+    - "{{ persistent_container_storage_dir }}/awx/projects"
+
+- name: Set permissions for AWX postgres directory
+  ansible.builtin.file:
+    path: "{{ persistent_container_storage_dir }}/awx/postgres-15"
+    mode: '0755'
+    recurse: yes
+
+- name: Set ownership for AWX postgres userdata directory
+  ansible.builtin.file:
+    path: "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
+    owner: 26
+    group: 26
+    mode: '0700'
+    recurse: yes
+
+- name: Set ownership for AWX project directory
+  ansible.builtin.file:
+    path: "{{ persistent_container_storage_dir }}/awx/projects"
+    owner: 1000
+    group: 0
+    mode: '0755'
+    recurse: yes
+
 - name: Include Backup and Restore specific tasks
   include_tasks: backup_restore_non_persistent.yml
   when: backup_restore_data | default(false) | bool
@@ -60,41 +91,10 @@
       ignore_errors: true
   when: delete_ns | default(false) | bool
 
-- name: Create necessary directories
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-  loop:
-    - "{{ bastion_install_dir }}/awx/kustomize/"
-    - "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
-    - "{{ persistent_container_storage_dir }}/awx/projects"
-
-- name: Set permissions for AWX postgres directory
-  ansible.builtin.file:
-    path: "{{ persistent_container_storage_dir }}/awx/postgres-15"
-    mode: '0755'
-    recurse: yes
-
-- name: Set ownership for AWX postgres userdata directory
-  ansible.builtin.file:
-    path: "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
-    owner: 26
-    group: 26
-    mode: '0700'
-    recurse: yes
-
-- name: Set ownership for AWX project directory
-  ansible.builtin.file:
-    path: "{{ persistent_container_storage_dir }}/awx/projects"
-    owner: 1000
-    group: 0
-    mode: '0755'
-    recurse: yes
-
 - name: Clone AWX Operator repository
   ansible.builtin.git:
     repo: 'https://github.com/ansible/awx-operator.git'
-    dest: '/root/awx-operator'
+    dest: '{{ bastion_install_dir }}/awx-operator'
     version: "tags/{{ awx_operator_version }}"
     force: yes
 
@@ -107,29 +107,22 @@
       metadata:
         name: "{{ awx_namespace }}"
 
-- name: Add script to get AWX Helm templates
-  ansible.builtin.template:
-    src: "get_new_awx_templates.sh.j2"
-    dest: "{{ bastion_install_dir }}/awx/get_new_awx_templates.sh"
-    mode: '0755'
+- name: Apply Kustomization.yaml to deploy AWX Operator
+  ansible.builtin.command:
+    cmd: "kubectl apply -k {{ bastion_install_dir }}/awx-operator/config/default"
+    args:
+      chdir: "{{ bastion_install_dir }}/awx-operator"
 
-- name: Run script to get AWX Helm templates
+- name: Wait for AWX Operator to be ready
   ansible.builtin.shell: |
-    "{{ bastion_install_dir }}/awx/get_new_awx_templates.sh"
-  args:
-    executable: /bin/bash
-  become: true
-
-- name: Remove script after execution
-  ansible.builtin.file:
-    path: "{{ bastion_install_dir }}/awx/get_new_awx_templates.sh"
-    state: absent
-
-- name: Find template files
-  ansible.builtin.find:
-    paths: "{{ bastion_install_dir }}/awx/kustomize/awx-operator/templates/"
-    patterns: "*.yaml"
-  register: template_files
+    until kubectl get pods -n "{{ awx_namespace }}" -l control-plane=controller-manager -o jsonpath='{.items[*].status.phase}' | grep -q 'Running'; do
+      echo "Waiting for AWX Operator to be ready...";
+      sleep 30;
+    done
+  retries: 20
+  delay: 30
+  register: awx_operator_ready
+  until: awx_operator_ready is success
 
 - name: Copy kustomization files
   ansible.builtin.template:
@@ -142,12 +135,6 @@
     - { src: "templates/kustomization/awx.yaml.j2", dest: "awx.yaml" }
     - { src: "templates/kustomization/kustomization.yaml.j2", dest: "kustomization.yaml" }
     - { src: "templates/kustomization/namespace.yaml.j2", dest: "namespace.yaml" }
-
-- name: Add template files to kustomization.yaml
-  ansible.builtin.template:
-    src: "templates/kustomization/kustomization.yaml.j2"
-    dest: "{{ bastion_install_dir }}/awx/kustomize/kustomization.yaml"
-  when: template_files.matched > 0
 
 - name: Install AWX CRDs
   ansible.builtin.command:
@@ -202,4 +189,3 @@
 
 - name: Cleanup temporary files and resources
   include_tasks: cleanup.yml
-...
