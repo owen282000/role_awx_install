@@ -44,18 +44,12 @@
     command: >
       psql -U {{ awx_db_user }} -d {{ awx_db_name }} -c "
       DROP TABLE IF EXISTS 
-      main_credentialtype, 
-      main_rbac_roles, 
       main_credential, 
-      main_organization, 
       main_inventory, 
       main_host, 
       main_executionenvironment, 
-      main_schedule, 
       main_unifiedjobtemplate, 
-      main_project, 
-      main_projectupdate, 
-      main_systemjobtemplate CASCADE;
+      main_project CASCADE;
       "
 
 - name: Restore backup using psql
