@@ -9,7 +9,7 @@
 
 - name: Remove old Helm installation script
   ansible.builtin.file:
-    path: "/root/k3s_install.sh"
+    path: "{{ bastion_install_dir }}/awx-operator"
     state: absent
 
 - name: Remove /tmp/awx directory

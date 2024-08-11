@@ -1,0 +1,100 @@
+---
+- name: Get list of AWX pods
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ awx_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/name=awx-task"
+  register: awx_pods
+
+- name: Collect pod name
+  ansible.builtin.set_fact:
+    podname: "{{ item.metadata.name }}"
+  loop: "{{ awx_pods.resources }}"
+
+- name: Get list of AWX pod postgres
+  kubernetes.core.k8s_info:
+    kind: Pod
+    namespace: "{{ awx_namespace }}"
+    label_selectors:
+      - "app.kubernetes.io/name=postgres-15"
+  register: awx_pods2
+
+- name: Collect pod postgres name
+  ansible.builtin.set_fact:
+    podname_postgres: "{{ item.metadata.name }}"
+  loop: "{{ awx_pods2.resources }}"
+
+- name: Tar project data in the pod
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname }}"
+    container: "awx-task"
+    command: "tar czf /tmp/projects_backup.tar.gz -C /var/lib/awx/projects ."
+
+- name: Copy projects backup to local machine
+  command: >
+    kubectl cp {{ awx_namespace }}/{{ podname }}:/tmp/projects_backup.tar.gz {{ persistent_container_storage_dir }}/awx/projects_backup.tar.gz
+
+- name: Extract projects backup to PV
+  ansible.builtin.shell: |
+    tar xzf {{ persistent_container_storage_dir }}/awx/projects_backup.tar.gz -C {{ persistent_container_storage_dir }}/awx/projects
+
+- name: Create backup directory in the pod
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: "mkdir -p /tmp/awx_backup"
+
+- name: Backup credentials
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: >
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_credential -t main_credentialinputsource -t main_credentialtype --data-only -f /tmp/awx_backup/credentials.sql
+
+- name: Backup projects
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: >
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_project -t main_projectupdate -t main_projectupdateevent --data-only -f /tmp/awx_backup/projects.sql
+
+- name: Backup job templates
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: >
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_jobtemplate -t main_workflowjobtemplate -t main_workflowjobtemplatenode --data-only -f /tmp/awx_backup/job_templates.sql
+
+- name: Backup execution environments
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: >
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_executionenvironment --data-only -f /tmp/awx_backup/execution_environments.sql
+
+- name: Backup inventories and hosts
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: >
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_inventory -t main_inventorysource -t main_host -t main_group --data-only -f /tmp/awx_backup/inventories_hosts.sql
+
+- name: Compress backup files
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    container: "postgresql"
+    command: "tar czf /tmp/awx_backup.tar.gz -C /tmp/awx_backup ."
+
+- name: Copy backup archive from the container to local machine
+  command: >
+    kubectl cp {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup.tar.gz {{ bastion_install_dir }}/awx_backup.tar.gz
+...

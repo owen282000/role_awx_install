@@ -60,7 +60,7 @@
     recurse: yes
 
 - name: Include Backup and Restore specific tasks
-  include_tasks: backup_restore_non_persistent.yml
+  include_tasks: backup_non_persistent.yml
   when: backup_restore_data | default(false) | bool
 
 - name: Include RedHat specific tasks
@@ -162,40 +162,41 @@
   delay: 30
   until: awx_instance_ready is success
 
-- name: Set AWX Operator version if not defined
-  block:
-  - name: Retrieve AWX admin password
-    ansible.builtin.shell: |
-      kubectl get secret awx-admin-password -n "{{ awx_namespace }}" -o jsonpath="{.data.password}" | base64 -d
-    register: awx_admin_password_output
-    changed_when: false
+- name: Include Restore specific tasks
+  include_tasks: restore_non_persistent.yml
+  when: backup_restore_data | default(false) | bool
 
-  - name: Retrieve NodePort of AWX service
-    ansible.builtin.shell: |
-      kubectl get service awx-service -n "{{ awx_namespace }}" -o jsonpath="{.spec.ports[0].nodePort}"
-    register: awx_service_port_output
-    changed_when: false
+- name: Retrieve AWX admin password
+  ansible.builtin.shell: |
+    kubectl get secret awx-admin-password -n "{{ awx_namespace }}" -o jsonpath="{.data.password}" | base64 -d
+  register: awx_admin_password_output
+  changed_when: false
 
-  - name: Set AWX admin password and service port facts
-    ansible.builtin.set_fact:
-      awx_admin_password: "{{ awx_admin_password_output.stdout }}"
-      awx_service_port: "{{ awx_service_port_output.stdout }}"
+- name: Retrieve NodePort of AWX service
+  ansible.builtin.shell: |
+    kubectl get service awx-service -n "{{ awx_namespace }}" -o jsonpath="{.spec.ports[0].nodePort}"
+  register: awx_service_port_output
+  changed_when: false
 
-  - name: Save AWX access details to a file
-    ansible.builtin.copy:
-      dest: "/tmp/awx_access_details.txt"
-      content: |
-        AWX admin password: {{ awx_admin_password }}
-        AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}
-      mode: '0644'
+- name: Set AWX admin password and service port facts
+  ansible.builtin.set_fact:
+    awx_admin_password: "{{ awx_admin_password_output.stdout }}"
+    awx_service_port: "{{ awx_service_port_output.stdout }}"
 
-  - name: Debug the content to be saved in the file
-    debug:
-      msg: |
-        AWX admin password: {{ awx_admin_password }}
-        AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}
-        Credentials saved in /tmp/awx_access_details.txt      
-  when: not backup_restore_data
+- name: Save AWX access details to a file
+  ansible.builtin.copy:
+    dest: "/tmp/awx_access_details.txt"
+    content: |
+      AWX admin password: {{ awx_admin_password }}
+      AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}
+    mode: '0644'
+
+- name: Debug the content to be saved in the file
+  debug:
+    msg: |
+      AWX admin password: {{ awx_admin_password }}
+      AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}
+      Credentials saved in /tmp/awx_access_details.txt 
 
 - name: Cleanup temporary files and resources
   include_tasks: cleanup.yml
