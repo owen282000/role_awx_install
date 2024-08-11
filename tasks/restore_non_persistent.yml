@@ -5,7 +5,7 @@
 
 - name: Get list of migration pods
   ansible.builtin.command: |
-    kubectl get pods -n "{{ awx_namespace }}" --no-headers | grep migration | awk '{print $3}'
+    "kubectl get pods -n {{ awx_namespace }} --no-headers | grep migration | awk '{print $3}'"
   register: migration_pods_status
   ignore_errors: true
 
@@ -16,10 +16,10 @@
 
 - name: Wait for all migration pods to complete
   ansible.builtin.shell: |
-    while [[ $(kubectl get pods -n "{{ awx_namespace }}" --no-headers | grep migration | awk '{print $3}' | grep -v Completed) ]]; do
-      echo "Waiting for all migration pods to complete...";
+    "while [[ $(kubectl get pods -n {{ awx_namespace }} --no-headers | grep migration | awk '{print $3}' | grep -v Completed) ]]; do
+      echo 'Waiting for all migration pods to complete...';
       sleep 30;
-    done
+    done"
   when: migration_in_progress | bool
   retries: 20
   delay: 30

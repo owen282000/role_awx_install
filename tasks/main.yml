@@ -89,10 +89,10 @@
         kind: PersistentVolume
         name: "{{ item }}"
       loop:
-        - awx-postgres-pv
-        - awx-projects-pv
+        - awx-postgres-15-volume
+        - awx-projects-volume
       ignore_errors: true
-      
+
     - name: Wait for AWX namespace deletion to complete
       ansible.builtin.shell: |
         while kubectl get namespace {{ awx_namespace }}; do
