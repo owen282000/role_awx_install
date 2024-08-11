@@ -1,4 +1,23 @@
 ---
+- name: Get list of migration pods
+  ansible.builtin.command: |
+    kubectl get pods -n "{{ awx_namespace }}" --no-headers | grep migration | awk '{print $3}'
+  register: migration_pods_status
+
+- name: Check if any migration pod is still running
+  ansible.builtin.set_fact:
+    migration_in_progress: "{{ 'Running' in migration_pods_status.stdout_lines }}"
+
+- name: Wait for all migration pods to complete
+  ansible.builtin.shell: |
+    while [[ $(kubectl get pods -n "{{ awx_namespace }}" --no-headers | grep migration | awk '{print $3}' | grep -v Completed) ]]; do
+      echo "Waiting for all migration pods to complete...";
+      sleep 30;
+    done
+  when: migration_in_progress | bool
+  retries: 20
+  delay: 30
+
 - name: Get list of AWX pod postgres
   kubernetes.core.k8s_info:
     kind: Pod

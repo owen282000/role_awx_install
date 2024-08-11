@@ -51,7 +51,7 @@
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
     command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_credential -t main_credentialinputsource -t main_credentialtype --data-only -f /tmp/awx_backup/credentials.sql
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_rbac_roles -t main_credential -t main_credentialinputsource -t main_credentialtype --data-only -f /tmp/awx_backup/credentials.sql
 
 - name: Backup projects
   kubernetes.core.k8s_exec:
@@ -65,7 +65,7 @@
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
     command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_jobtemplate -t main_workflowjobtemplate -t main_workflowjobtemplatenode --data-only -f /tmp/awx_backup/job_templates.sql
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_unifiedjobtemplate -t main_jobtemplate -t main_workflowjobtemplate -t main_workflowjobtemplatenode --data-only -f /tmp/awx_backup/job_templates.sql
 
 - name: Backup execution environments
   kubernetes.core.k8s_exec:
