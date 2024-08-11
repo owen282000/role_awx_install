@@ -6,6 +6,8 @@ awx_namespace: "awx"  # Namespace where AWX will be deployed
 bastion_install_dir: "/tmp/awx"  # Location on the bastion host where files will be stored
 persistent_container_storage_dir: "/srv/containers"  # Directory where persistent storage will be mounted
 awx_admin_user: "admin" # Admin user of AWX
+awx_db_user: "awx" # Database user of AWX
+awx_db_name: "awx" # Database name of AWX
 
 # AWX Operator version
 #awx_operator_version: "2.19.1"  # Version of the AWX Operator to be installed // Not defined means latest
@@ -14,7 +16,8 @@ awx_admin_user: "admin" # Admin user of AWX
 k3s_install: false # Set to true to install k3s
 
 # Backup and restore options
-backup_restore_data: false  # Set to true to enable backup and restore functionality
+backup_data: false  # Set to true to enable backup functionality
+restore_data: false  # Set to true to enable restore functionality
 
 # Namespace deletion
 delete_ns: false  # Set to true to delete the namespace and persistent volumes before redeploying

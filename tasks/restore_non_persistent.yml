@@ -12,6 +12,12 @@
     podname_postgres: "{{ item.metadata.name }}"
   loop: "{{ awx_pods2.resources }}"
 
+- name: Create backup directory in the container
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    command: "mkdir -p /tmp/awx_backup"
+
 - name: Copy backup archive from the container to local machine
   ansible.builtin.command: >
     kubectl cp {{ bastion_install_dir }}/awx_backup.tar.gz {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup.tar.gz
