@@ -59,9 +59,9 @@
     mode: '0755'
     recurse: yes
 
-- name: Include Backup and Restore specific tasks
-  include_tasks: backup_non_persistent.yml
-  when: backup_data | default(false) | bool
+#- name: Include Backup specific tasks
+#  include_tasks: backup_non_persistent.yml
+#  when: backup_data | default(false) | bool
 
 - name: Include RedHat specific tasks
   include_tasks: redhat.yml
@@ -190,9 +190,9 @@
   ansible.builtin.set_fact:
     awx_base_url: "http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}"
 
-- name: Include Restore specific tasks
-  include_tasks: restore_non_persistent.yml
-  when: restore_data | default(false) | bool
+#- name: Include Restore specific tasks
+#  include_tasks: restore_non_persistent.yml
+#  when: restore_data | default(false) | bool
 
 - name: Save AWX access details to a file
   ansible.builtin.copy:
