@@ -1,14 +1,29 @@
 ---
-- name: Wait for migrations to complete by checking the URL
-  ansible.builtin.uri:
-    url: "{{ awx_base_url }}/"
-    method: GET
-    return_content: yes
-    follow_redirects: all
-  register: migration_check
-  retries: 60
+- name: Wait 60 seconds for migration pods to spin up
+  ansible.builtin.wait_for:
+    timeout: 60
+
+- name: Get list of migration pods
+  ansible.builtin.command: |
+    "kubectl get pods -n {{ awx_namespace }} --no-headers | grep migration | awk '{print $3}'"
+  register: migration_pods_status
+  ignore_errors: true
+
+- name: Check if any migration pod is still running
+  ansible.builtin.set_fact:
+    migration_in_progress: "{{ 'Running' in migration_pods_status.stdout_lines }}"
+  ignore_errors: true
+
+- name: Wait for all migration pods to complete
+  ansible.builtin.shell: |
+    "while [[ $(kubectl get pods -n {{ awx_namespace }} --no-headers | grep migration | awk '{print $3}' | grep -v Completed) ]]; do
+      echo 'Waiting for all migration pods to complete...';
+      sleep 30;
+    done"
+  when: migration_in_progress | bool
+  retries: 20
   delay: 30
-  until: "'/#/login' in migration_check.content"
+  ignore_errors: true
 
 - name: Get list of AWX pod postgres
   kubernetes.core.k8s_info:
