@@ -30,31 +30,4 @@
   ansible.builtin.file:
     path: /root/.kube/config
     mode: '0600'
-
-- name: Execute script to get new AWX Helm version
-  ansible.builtin.shell: |
-    "/usr/bin/helm version" 
-  register: helm_installed
-  ignore_errors: true
-  changed_when: false
-  become: true
-
-- block:
-    - name: Download Helm command line tool
-      ansible.builtin.uri:
-        url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
-        return_content: true
-      register: helm_installer
-
-    - name: Install Helm
-      ansible.builtin.command:
-        cmd: bash
-        stdin: "{{ helm_installer.content }}"
-        creates: /usr/local/bin/helm
-
-    - name: Copy Helm binary to /usr/bin
-      ansible.builtin.command: "ln /usr/local/bin/helm /usr/bin/helm"
-      args:
-        creates: /usr/bin/helm
-  when: helm_installed.failed
 ...
