@@ -1,8 +1,4 @@
 ---
-- name: Set the AWX base URL
-  ansible.builtin.set_fact:
-    awx_base_url: "http://{{ awx_ip }}:{{ awx_nodeport }}"
-
 - name: Wait for migrations to complete by checking the URL
   ansible.builtin.uri:
     url: "{{ awx_base_url }}/"

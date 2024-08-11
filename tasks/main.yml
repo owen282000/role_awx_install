@@ -186,6 +186,10 @@
     awx_admin_password: "{{ awx_admin_password_output.stdout }}"
     awx_service_port: "{{ awx_service_port_output.stdout }}"
 
+- name: Set the AWX base URL
+  ansible.builtin.set_fact:
+    awx_base_url: "http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}"
+
 - name: Include Restore specific tasks
   include_tasks: restore_non_persistent.yml
   when: restore_data | default(false) | bool
@@ -195,14 +199,14 @@
     dest: "/tmp/awx_access_details.txt"
     content: |
       AWX admin password: {{ awx_admin_password }}
-      AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}
+      AWX URL: {{ awx_base_url }}
     mode: '0644'
 
 - name: Debug the content to be saved in the file
   debug:
     msg: |
       AWX admin password: {{ awx_admin_password }}
-      AWX URL: http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}
+      AWX URL: {{ awx_base_url }}
       Credentials saved in /tmp/awx_access_details.txt 
 
 - name: Cleanup temporary files and resources
