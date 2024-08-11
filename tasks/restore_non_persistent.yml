@@ -48,9 +48,30 @@
   ansible.builtin.command: >
     kubectl cp {{ bastion_install_dir }}/full_backup.sql {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup/full_backup.sql
 
-- name: Restore backup
+- name: Drop all relevant tables before restore
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    command: "pg_restore --clean --if-exists -U {{ awx_db_user }} -d {{ awx_db_name }} /tmp/awx_backup/full_backup.sql"
+    command: >
+      psql -U {{ awx_db_user }} -d {{ awx_db_name }} -c "
+      DROP TABLE IF EXISTS 
+      main_credentialtype, 
+      main_rbac_roles, 
+      main_credential, 
+      main_organization, 
+      main_inventory, 
+      main_host, 
+      main_executionenvironment, 
+      main_schedule, 
+      main_unifiedjobtemplate, 
+      main_project, 
+      main_projectupdate, 
+      main_systemjobtemplate CASCADE;
+      "
+
+- name: Restore backup using psql
+  kubernetes.core.k8s_exec:
+    namespace: "{{ awx_namespace }}"
+    pod: "{{ podname_postgres }}"
+    command: "psql -U {{ awx_db_user }} -d {{ awx_db_name }} -f /tmp/awx_backup/full_backup.sql"
 ...
