@@ -4,6 +4,8 @@ kind: AWX
 metadata:
   name: awx
 spec:
+  admin_user: "{{ awx_admin_user }}"
+  admin_password_secret: awx-admin-password
   postgres_configuration_secret: awx-postgres-configuration
   postgres_storage_class: awx-postgres-volume
   postgres_storage_requirements:

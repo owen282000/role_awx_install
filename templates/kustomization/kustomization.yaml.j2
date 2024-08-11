@@ -7,11 +7,14 @@ resources:
   - pv.yaml
   - pvc.yaml
   - awx.yaml
-  {% for file in template_files.files %}
-- awx-operator/templates/{{ file.path | regex_replace('^.*/', '') }}
-  {% endfor %}
 
 generatorOptions:
   disableNameSuffixHash: true
+
+secretGenerator:
+- name: awx-admin-password
+  type: Opaque
+  literals:
+  - password={{ awx_admin_password }}
 
 namespace: awx
