@@ -16,4 +16,3 @@
   ansible.builtin.file:
     path: "/tmp/awx"
     state: absent
-    recurse: true
