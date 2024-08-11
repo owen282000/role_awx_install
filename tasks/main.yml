@@ -169,10 +169,6 @@
   delay: 30
   until: awx_instance_ready is success
 
-- name: Include Restore specific tasks
-  include_tasks: restore_non_persistent.yml
-  when: restore_data | default(false) | bool
-
 - name: Retrieve AWX admin password
   ansible.builtin.shell: |
     kubectl get secret awx-admin-password -n "{{ awx_namespace }}" -o jsonpath="{.data.password}" | base64 -d
@@ -189,6 +185,10 @@
   ansible.builtin.set_fact:
     awx_admin_password: "{{ awx_admin_password_output.stdout }}"
     awx_service_port: "{{ awx_service_port_output.stdout }}"
+
+- name: Include Restore specific tasks
+  include_tasks: restore_non_persistent.yml
+  when: restore_data | default(false) | bool
 
 - name: Save AWX access details to a file
   ansible.builtin.copy:
