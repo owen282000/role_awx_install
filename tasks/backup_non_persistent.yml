@@ -46,48 +46,23 @@
     pod: "{{ podname_postgres }}"
     command: "mkdir -p /tmp/awx_backup"
 
-- name: Backup credentials
+- name: Backup entire AWX database
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
     command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_rbac_roles -t main_credential -t main_credentialinputsource -t main_credentialtype --data-only -f /tmp/awx_backup/credentials.sql
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} --data-only -f /tmp/awx_backup/full_backup.sql
 
-- name: Backup projects
+- name: Remove admin user and job records from the backup
   kubernetes.core.k8s_exec:
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
-    command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_project -t main_projectupdate -t main_projectupdateevent --data-only -f /tmp/awx_backup/projects.sql
+    command: |
+      sed -i '/INSERT INTO public.auth_user .*\'admin\''/d' /tmp/awx_backup/full_backup.sql &&
+      sed -i '/COPY public.main_unifiedjob .*/d' /tmp/awx_backup/full_backup.sql &&
+      sed -i '/COPY public.main_job .*/d' /tmp/awx_backup/full_backup.sql
 
-- name: Backup job templates
-  kubernetes.core.k8s_exec:
-    namespace: "{{ awx_namespace }}"
-    pod: "{{ podname_postgres }}"
-    command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_unifiedjobtemplate -t main_jobtemplate -t main_workflowjobtemplate -t main_workflowjobtemplatenode --data-only -f /tmp/awx_backup/job_templates.sql
-
-- name: Backup execution environments
-  kubernetes.core.k8s_exec:
-    namespace: "{{ awx_namespace }}"
-    pod: "{{ podname_postgres }}"
-    command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_executionenvironment --data-only -f /tmp/awx_backup/execution_environments.sql
-
-- name: Backup inventories and hosts
-  kubernetes.core.k8s_exec:
-    namespace: "{{ awx_namespace }}"
-    pod: "{{ podname_postgres }}"
-    command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} -t main_inventory -t main_inventorysource -t main_host -t main_group --data-only -f /tmp/awx_backup/inventories_hosts.sql
-
-- name: Compress backup files
-  kubernetes.core.k8s_exec:
-    namespace: "{{ awx_namespace }}"
-    pod: "{{ podname_postgres }}"
-    command: "tar czf /tmp/awx_backup.tar.gz -C /tmp/awx_backup ."
-
-- name: Copy backup archive from the container to local machine
+- name: Copy backup from the container to local machine
   command: >
-    kubectl cp {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup.tar.gz {{ bastion_install_dir }}/awx_backup.tar.gz
+    kubectl cp {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup/full_backup.sql {{ bastion_install_dir }}/full_backup.sql
 ...
