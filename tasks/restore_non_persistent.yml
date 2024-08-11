@@ -46,7 +46,7 @@
 
 - name: Copy backup archive from the container to local machine
   ansible.builtin.command: >
-    kubectl cp {{ bastion_install_dir }}full_backup.sql {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup/full_backup.sql
+    kubectl cp {{ bastion_install_dir }}/full_backup.sql {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup/full_backup.sql
 
 - name: Restore backup
   kubernetes.core.k8s_exec:

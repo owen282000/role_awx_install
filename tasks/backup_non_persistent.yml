@@ -51,15 +51,7 @@
     namespace: "{{ awx_namespace }}"
     pod: "{{ podname_postgres }}"
     command: >
-      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} --exclude-table=public.auth_user --exclude-table=public.auth_user_groups --exclude-table=public.auth_user_user_permissions --data-only -f /tmp/awx_backup/full_backup.sql
-
-- name: Remove admin user and job records from the backup
-  kubernetes.core.k8s_exec:
-    namespace: "{{ awx_namespace }}"
-    pod: "{{ podname_postgres }}"
-    command: |
-      sed -i '/COPY public.main_unifiedjob .*/d' /tmp/awx_backup/full_backup.sql &&
-      sed -i '/COPY public.main_job .*/d' /tmp/awx_backup/full_backup.sql
+      pg_dump -U {{ awx_db_user }} -d {{ awx_db_name }} --exclude-table=public.main_job --exclude-table=public.main_unifiedjob --exclude-table=public.auth_user --exclude-table=public.auth_user_groups --exclude-table=public.auth_user_user_permissions --data-only -f /tmp/awx_backup/full_backup.sql
 
 - name: Copy backup from the container to local machine
   command: >
