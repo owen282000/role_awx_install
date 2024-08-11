@@ -33,9 +33,13 @@
     pod: "{{ podname_postgres }}"
     command: "mkdir -p /tmp/awx_backup"
 
-- name: Copy backup archive from the container to local machine
+- name: Copy backup from the container to local machine
   ansible.builtin.command: >
     kubectl cp {{ bastion_install_dir }}/full_backup.sql {{ awx_namespace }}/{{ podname_postgres }}:/tmp/awx_backup/full_backup.sql
+  register: copy_backup_result
+  retries: 5
+  delay: 10
+  until: copy_backup_result is succeeded
 
 #- name: Drop all relevant tables before restore
 #  kubernetes.core.k8s_exec:
