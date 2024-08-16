@@ -23,30 +23,13 @@ set_logo: "true"
 set_login_info: "true"
 
 logo_file_path: "{{ base_dir }}/resources/logo.png"
-# logo_url: "https://example.com/path/to/logo.png"  # Optional, uncomment to use URL instead
+#logo_url: "https://example.com/path/to/logo.png"  # Optional, uncomment to use URL instead
 
 custom_login_info_content: |
   <div style="text-align:center; font-family: Arial, sans-serif; color: white;">
       <p style="font-size: 20px;">
           This platform is managed by <strong>Me</strong>.
       </p>
-      
-      <p style="font-size: 16px;">
-          Please log in with your credentials to access the automation services.
-      </p>
-
-      <p style="font-size: 18px;">
-          If you encounter any issues, feel free to reach out to our service desk at:
-      </p>
-      
-      <p style="font-size: 20px;">
-          <a href="mailto:me@myself.i" style="text-decoration: none; color: white;">me@myself.i</a>
-      </p>
-
-      <p style="font-size: 14px;">
-          Managed by <strong>Me</strong>
-      </p>
   </div>
-
 
 ...
