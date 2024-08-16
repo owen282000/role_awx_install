@@ -34,8 +34,8 @@ This Ansible role installs and configures **AWX** on a Kubernetes cluster with a
 ### Ingress Configuration
 | Variable                              | Description                                             | Default                          |
 |---------------------------------------|---------------------------------------------------------|----------------------------------|
-| `awx_use_cname`                       | Set to `true` to use custom CNAME for AWX Ingress        | `false`                          |
-| `awx_cname`                           | Custom CNAME for AWX Ingress (if `awx_use_cname` is true)| `""`                             |
+| `awx_use_cname`                       | Set to `true` to use custom CNAME for AWX Ingress        | `false`                         |
+| `awx_cname`                           | Custom CNAME for AWX Ingress (if `awx_use_cname` is true)| `awx.local.lan                  |
 
 ### K3s Installation
 | Variable                              | Description                                             | Default                          |
@@ -45,22 +45,23 @@ This Ansible role installs and configures **AWX** on a Kubernetes cluster with a
 ### Namespace Deletion
 | Variable                              | Description                                             | Default                          |
 |---------------------------------------|---------------------------------------------------------|----------------------------------|
-| `delete_ns`                           | Set to `true` to delete the namespace and persistent volumes before redeploying | `false` |
+| `delete_ns`                           | Set to `true` to delete the namespace and persistent volumes before redeploying | `false`  |
 
 ### Customization
 | Variable                              | Description                                             | Default                          |
 |---------------------------------------|---------------------------------------------------------|----------------------------------|
-| `set_logo`                            | Set to `true` to configure a custom logo in AWX          | `false`                          |
-| `set_login_info`                      | Set to `true` to configure custom login information      | `false`                          |
-| `set_ldap`                            | Set to `true` to configure LDAP settings                 | `false`                          |
-| `logo_file_path`                      | Path to the custom logo file                             | `{{ base_dir }}/resources/logo.png` |
+| `set_logo`                            | Set to `true` to configure a custom logo in AWX          | `false`                         |
+| `set_login_info`                      | Set to `true` to configure custom login information      | `false`                         |
+| `set_ldap`                            | Set to `true` to configure LDAP settings                 | `false`                         |
+| `logo_file_path`                      | Path to the custom logo file, only when logo_url not set | `{{ base_dir }}/resources/logo.png` |
+| `logo_url`                            | URL to the custom logo file, will use this if set        | `{{ base_dir }}/resources/logo.png` |
 | `custom_login_info_content`           | Custom login page HTML content                           | Custom HTML provided in defaults |
 
 ### AWX Credential Setup
 | Variable                              | Description                                             | Default                          |
 |---------------------------------------|---------------------------------------------------------|----------------------------------|
-| `set_credentials`                     | Set to `true` to configure credentials in AWX            | `true`                           |
-| `credentials`                         | List of credentials to configure                         | See defaults/main.yml            |
+| `set_credentials`                     | Set to `true` to configure credentials in AWX            | `true`                          |
+| `credentials`                         | List of credentials to configure                         | See defaults/main.yml           |
 
 ### AWX Project Setup
 | Variable                              | Description                                             | Default                          |
