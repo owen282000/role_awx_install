@@ -93,6 +93,6 @@
     value: "{{ awx_base_url }}"
     validate_certs: false
 
-- name: Set AWX Settings
-  include_tasks: awx_settings.yml
+- name: Set LDAP Settings
+  include_tasks: awx_ldap.yml
 ...

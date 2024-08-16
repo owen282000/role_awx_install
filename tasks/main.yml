@@ -227,6 +227,9 @@
 - name: Set AWX Settings
   include_tasks: awx_settings.yml
 
+- name: Set AWX Projects
+  include_tasks: awx_projects.yml
+
 - name: Cleanup temporary files and resources
   include_tasks: cleanup.yml
 ...
