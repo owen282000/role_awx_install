@@ -83,6 +83,35 @@ projects:
     local_path: "test"    # Has to be the directory name in {{ persistent_container_storage_dir }}/projects/*; only applicable when scm_type: "manual"
 
 ###############################################################################
+# AWX Inventory Setup
+###############################################################################
+set_inventories: "true"
+
+inventories:
+  - name: "Inventory A"
+    description: "Description for Inventory A"
+    organization: "Default"
+    inventory_source_name: "Source for Inventory A"
+    source_project: "Project A"
+    source_path: "hosts/hosts.yml"  # Path to inventory file in project repo
+    #credential: "GitHub Access Token"
+    overwrite: true
+    update_on_launch: true
+    sync_on_create: true  # Set to true to sync inventory immediately after creation
+    update_cache_timeout: 7200  # Set cache timeout in seconds
+
+  - name: "Inventory B"
+    description: "Description for Inventory B"
+    organization: "Default"
+    inventory_source_name: "Source for Inventory B"
+    source_project: "Project B"
+    source_path: "hosts.ini"
+    overwrite: true
+    update_on_launch: true
+    sync_on_create: true  # Optional, sync inventory after creation
+    update_cache_timeout: 7200  # Set cache timeout in seconds
+
+###############################################################################
 # AWX Customization Settings
 ###############################################################################
 set_logo: "false"                        # Set to true to configure custom logo

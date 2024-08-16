@@ -1,0 +1,58 @@
+---
+- name: "Create inventory and configure source in AWX"
+  block:
+    - name: "Create inventory in AWX"
+      awx.awx.inventory:
+        name: "{{ item.name }}"
+        description: "{{ item.description | default(omit) }}"
+        organization: "{{ item.organization }}"
+        state: present
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        validate_certs: false
+      loop: "{{ inventories }}"
+
+    - name: "Configure inventory source"
+      awx.awx.inventory_source:
+        name: "{{ item.inventory_source_name }}"
+        inventory: "{{ item.name }}"
+        source: "scm"
+        source_project: "{{ item.source_project }}"
+        source_path: "{{ item.source_path }}"
+        credential: "{{ item.credential }}"
+        overwrite: "{{ item.overwrite }}"
+        update_on_launch: "{{ item.update_on_launch }}"
+        update_cache_timeout: "{{ item.update_cache_timeout | default(omit) }}"
+        state: present
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        validate_certs: false
+      loop: "{{ inventories }}"
+
+    - name: "Sync inventory source if configured"
+      awx.awx.inventory_source_update:
+        name: "{{ item.inventory_source_name }}"
+        inventory: "{{ item.name }}"
+        wait: true
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        validate_certs: false
+      loop: "{{ inventories }}"
+      when: item.sync_on_create | default(false)
+
+    - name: "Print success message for each inventory"
+      debug:
+        msg: "Configured inventory {{ item.name }} successfully."
+      loop: "{{ inventories }}"
+
+  rescue:
+    - name: "Handle failure during project configuration"
+      debug:
+        msg: "Failed to configure inventory {{ item.name }}."
+      loop: "{{ inventories }}"
+
+  when: set_inventories is defined and set_inventories | bool
+...
