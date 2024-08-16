@@ -201,6 +201,21 @@
       AWX URL: {{ awx_base_url }}
       Credentials saved in /tmp/awx_access_details.txt 
 
+- name: Wait 60 seconds for migration pods to spin up
+  ansible.builtin.wait_for:
+    timeout: 60
+
+- name: Check if AWX is in migration state
+  ansible.builtin.uri:
+    url: "{{ awx_base_url }}/"
+    method: GET
+    return_content: yes
+    follow_redirects: all
+  register: page_content
+  retries: 20
+  delay: 30
+  until: "'AWX Upgrading' not in page_content.content"
+
 - name: Get AWX API Token
   include_tasks: awx_api.yml
 
