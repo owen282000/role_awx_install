@@ -19,7 +19,7 @@ Below are the default variables that can be overridden as needed:
 General Variables
 ---------
 - awx_namespace: The namespace where AWX will be deployed. Default is "awx".
-- bastion_install_dir: The directory on the bastion host where installation-related files will be stored. Default is "/tmp/awx".
+- install_dir: The directory where installation-related files will be stored. Default is "/tmp/awx".
 - persistent_container_storage_dir: The directory where persistent storage locations are mounted. Default is "/srv/containers".
 
 AWX Operator
@@ -29,10 +29,6 @@ AWX Operator
 K3S Installation
 ---------
 - k3s_install: Set to true to install K3s as part of this role. Default is false.
-
-Backup and Restore Options
----------
-- backup_restore_data: Set to true to enable backup and restore functionality for migrating from a non-persistent to a persistent AWX deployment. Default is false.
 
 Namespace Deletion
 ---------
@@ -55,9 +51,8 @@ Example Playbook
   become: true
   vars:
     awx_namespace: "awx"
-    bastion_install_dir: "/tmp/awx"
+    install_dir: "/tmp/awx"
     persistent_container_storage_dir: "/srv/containers"
-    backup_restore_data: false
     delete_ns: false
     k3s_install: true
   roles:

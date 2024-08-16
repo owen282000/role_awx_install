@@ -30,3 +30,4 @@
 
 - name: Restore SELinux context on RedHat/CentOS
   ansible.builtin.command: "restorecon -Rv -F {{ persistent_container_storage_dir }}/awx"
+...

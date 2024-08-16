@@ -7,7 +7,7 @@
   loop:
     - awx_admin_user
     - awx_admin_password 
-    - bastion_install_dir
+    - install_dir
     - persistent_container_storage_dir
     - awx_namespace
 
@@ -33,7 +33,7 @@
     path: "{{ item }}"
     state: directory
   loop:
-    - "{{ bastion_install_dir }}/awx/kustomize/"
+    - "{{ install_dir }}/awx/kustomize/"
     - "{{ persistent_container_storage_dir }}/awx/postgres-15/data/userdata"
     - "{{ persistent_container_storage_dir }}/awx/projects"
 
@@ -58,10 +58,6 @@
     group: 0
     mode: '0755'
     recurse: yes
-
-#- name: Include Backup specific tasks
-#  include_tasks: backup_non_persistent.yml
-#  when: backup_data | default(false) | bool
 
 - name: Include RedHat specific tasks
   include_tasks: redhat.yml
@@ -104,7 +100,7 @@
 - name: Clone AWX Operator repository
   ansible.builtin.git:
     repo: 'https://github.com/ansible/awx-operator.git'
-    dest: '{{ bastion_install_dir }}/awx-operator'
+    dest: '{{ install_dir }}/awx-operator'
     version: "tags/{{ awx_operator_version }}"
     force: yes
 
@@ -119,8 +115,8 @@
 
 - name: Apply Kustomization.yaml to deploy AWX Operator
   ansible.builtin.command:
-    cmd: "kubectl apply -k {{ bastion_install_dir }}/awx-operator/config/default"
-    chdir: "{{ bastion_install_dir }}/awx-operator"
+    cmd: "kubectl apply -k {{ install_dir }}/awx-operator/config/default"
+    chdir: "{{ install_dir }}/awx-operator"
 
 - name: Wait for AWX Operator to be ready
   ansible.builtin.shell: |
@@ -136,7 +132,7 @@
 - name: Copy kustomization files
   ansible.builtin.template:
     src: "{{ item.src }}"
-    dest: "{{ bastion_install_dir }}/awx/kustomize/{{ item.dest }}"
+    dest: "{{ install_dir }}/awx/kustomize/{{ item.dest }}"
   loop:
     - { src: "templates/kustomization/pvc.yaml.j2", dest: "pvc.yaml" }
     - { src: "templates/kustomization/pv.yaml.j2", dest: "pv.yaml" }
@@ -156,7 +152,7 @@
 
 - name: Deploy AWX
   ansible.builtin.command:
-    cmd: "kubectl apply -k {{ bastion_install_dir }}/awx/kustomize"
+    cmd: "kubectl apply -k {{ install_dir }}/awx/kustomize"
 
 - name: Wait for AWX instance to be ready
   ansible.builtin.shell: |
@@ -189,10 +185,6 @@
 - name: Set the AWX base URL
   ansible.builtin.set_fact:
     awx_base_url: "http://{{ ansible_default_ipv4.address }}:{{ awx_service_port }}"
-
-#- name: Include Restore specific tasks
-#  include_tasks: restore_non_persistent.yml
-#  when: restore_data | default(false) | bool
 
 - name: Save AWX access details to a file
   ansible.builtin.copy:

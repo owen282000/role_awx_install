@@ -7,22 +7,13 @@
   loop:
     - git
     - make
-    - ufw
     - docker
     - python3-pip
 
-- name: Start and enable UFW
+- name: Stop and disable UFW
   ansible.builtin.service:
     name: ufw
-    state: started
-    enabled: true
-
-- name: Allow necessary ports in UFW
-  ansible.builtin.ufw:
-    rule: allow
-    port: "{{ item }}"
-  loop:
-    - '22'
-    - '80'
-    - '443'
+    state: stopped
+    enabled: false
+  ignore_errors: true
 ...
