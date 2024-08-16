@@ -1,7 +1,7 @@
 ---
 - name: Request Personal Tower CLI Token via AWX API
   ansible.builtin.uri:
-    url: "http://{{ awx_admin_user }}:{{ awx_admin_password }}@{{ awx_base_url }}/api/v2/users/1/personal_tokens/"
+    url: "http://{{ awx_admin_user }}:{{ awx_admin_password }}@{{ ansible_default_ipv4.address }}:{{ awx_service_port }}/api/v2/users/1/personal_tokens/"
     method: POST
     headers:
       Content-Type: "application/json"
