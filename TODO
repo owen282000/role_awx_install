@@ -1,5 +1,9 @@
 - Add ingress functionality
 - Add SUSE
 - Add RKE2
-- Update README, asset and defaults
+- Update README
 - Delete Default resources
+- Hosts to separate file, add groups to that
+- Test LDAP
+- Test CNAME
+  - When awx_use_cname is true, awx_cname must be set

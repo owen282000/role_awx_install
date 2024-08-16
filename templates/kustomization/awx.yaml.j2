@@ -6,6 +6,11 @@ metadata:
 spec:
   admin_user: "{{ awx_admin_user }}"
   admin_password_secret: awx-admin-password
+  {% if awx_use_cname %}
+  ingress_type: ingress
+  ingress_tls_secret: awx-secret-tls
+  hostname: {{ awx_cname }}
+  {% endif %}
   postgres_configuration_secret: awx-postgres-configuration
   postgres_storage_class: awx-postgres-volume
   postgres_storage_requirements:
@@ -13,4 +18,3 @@ spec:
       storage: 8Gi
   projects_persistence: true
   projects_existing_claim: awx-projects-claim
-  service_type: nodeport

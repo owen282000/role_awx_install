@@ -7,6 +7,7 @@
   loop:
     - awx_admin_user
     - awx_admin_password 
+    - awx_db_password
     - install_dir
     - persistent_container_storage_dir
     - awx_namespace
@@ -129,6 +130,12 @@
   register: awx_operator_ready
   until: awx_operator_ready is success
 
+- name: Generate self signed cert
+  ansible.builtin.command:
+    cmd: 'openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out {{ bastion_install_dir }}/awx/kustomize/tls.crt -keyout {{ bastion_install_dir }}/awx/kustomize/tls.key -subj "/CN={{ awx_cname }}/O={{ awx_cname }}" -addext "subjectAltName = DNS:{{ awx_cname }}"'
+    creates: "{{ bastion_install_dir }}/awx/kustomize/tls.crt"
+  when: awx_use_cname
+
 - name: Copy kustomization files
   ansible.builtin.template:
     src: "{{ item.src }}"
@@ -194,13 +201,6 @@
       AWX URL: {{ awx_base_url }}
     mode: '0644'
 
-- name: Debug the content to be saved in the file
-  debug:
-    msg: |
-      AWX admin password: {{ awx_admin_password }}
-      AWX URL: {{ awx_base_url }}
-      Credentials saved in /tmp/awx_access_details.txt 
-
 - name: Wait 60 seconds for migration pods to spin up
   ansible.builtin.wait_for:
     timeout: 60
@@ -238,4 +238,11 @@
 
 - name: Cleanup temporary files and resources
   include_tasks: cleanup.yml
+
+- name: Debug the content to be saved in the file
+  debug:
+    msg: |
+      AWX admin password: {{ awx_admin_password }}
+      AWX URL: {{ awx_base_url }}
+      Credentials saved in /tmp/awx_access_details.txt 
 ...
