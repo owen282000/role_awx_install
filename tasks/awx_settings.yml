@@ -83,3 +83,16 @@
     value: "{{ custom_login_info_content }}"
     validate_certs: false
   when: set_login_info is defined and set_login_info | bool
+
+- name: Set the Base URL of the service in AWX
+  awx.awx.settings:
+    controller_host: "{{ awx_base_url }}"
+    controller_username: "{{ awx_admin_user }}"
+    controller_password: "{{ awx_admin_password }}"
+    name: "TOWER_URL_BASE"
+    value: "{{ awx_base_url }}"
+    validate_certs: false
+
+- name: Set AWX Settings
+  include_tasks: awx_settings.yml
+...

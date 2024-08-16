@@ -21,6 +21,7 @@ delete_ns: false  # Set to true to delete the namespace and persistent volumes b
 # AWX Settings
 set_logo: "true"
 set_login_info: "true"
+set_ldap: "false"
 
 logo_file_path: "{{ base_dir }}/resources/logo.png"
 #logo_url: "https://example.com/path/to/logo.png"  # Optional, uncomment to use URL instead
@@ -32,4 +33,30 @@ custom_login_info_content: |
       </p>
   </div>
 
+# LDAP Settings
+ldap_server_uri: "ldaps://your-ldap-server.com:636" # Or "ldap://your-ldap-server.com:389"
+ldap_bind_dn: "uid=awx,cn=sysaccounts,cn=etc,dc=yourdomain,dc=com"
+ldap_bind_password: "your_bind_password"
+ldap_start_tls: false
+ldap_connection_options: 
+  OPT_REFERRALS: 0
+  OPT_NETWORK_TIMEOUT: 30
+ldap_user_dn_template: "uid=%(user)s,cn=users,cn=accounts,dc=yourdomain,dc=com"
+ldap_user_attr_map:
+  email: "mail"
+  last_name: "sn"
+  first_name: "givenName"
+ldap_group_search: 
+  - "cn=groups,cn=accounts,dc=yourdomain,dc=com"
+  - "SCOPE_SUBTREE"
+  - "(objectClass=groupOfNames)"
+ldap_group_type: "MemberDNGroupType"
+ldap_group_type_params:
+  member_attr: "member"
+  name_attr: "cn"
+ldap_require_group: "cn=required_group,cn=groups,cn=accounts,dc=yourdomain,dc=com"
+ldap_deny_group: null
+ldap_user_flags_by_group:
+  is_superuser: 
+    - "cn=admin_group,cn=groups,cn=accounts,dc=yourdomain,dc=com"
 ...

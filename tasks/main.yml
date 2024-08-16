@@ -156,7 +156,7 @@
 
 - name: Wait for AWX instance to be ready
   ansible.builtin.shell: |
-    until kubectl get pods -n "awx" -l app.kubernetes.io/name=awx-web -o jsonpath='{.items[*].status.phase}' | grep -q 'Running'; do
+    until kubectl get pods -n "{{ awx_namespace }}" -l app.kubernetes.io/name=awx-web -o jsonpath='{.items[*].status.phase}' | grep -q 'Running'; do
       echo "Waiting for AWX instance to be ready...";
       sleep 30;
     done

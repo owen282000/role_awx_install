@@ -1,0 +1,132 @@
+---
+## Not yet tested
+
+- name: Configure LDAP Settings in AWX
+  block:
+    - name: Set LDAP Server URI
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_SERVER_URI"
+        value: "{{ ldap_server_uri }}"
+        validate_certs: false
+
+    - name: Set LDAP Bind DN
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_BIND_DN"
+        value: "{{ ldap_bind_dn }}"
+        validate_certs: false
+
+    - name: Set LDAP Bind Password
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_BIND_PASSWORD"
+        value: "{{ ldap_bind_password }}"
+        validate_certs: false
+
+    - name: Set LDAP Start TLS
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_START_TLS"
+        value: "{{ ldap_start_tls }}"
+        validate_certs: false
+
+    - name: Set LDAP Connection Options
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_CONNECTION_OPTIONS"
+        value: "{{ ldap_connection_options }}"
+        validate_certs: false
+
+    - name: Set LDAP User DN Template
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_USER_DN_TEMPLATE"
+        value: "{{ ldap_user_dn_template }}"
+        validate_certs: false
+
+    - name: Set LDAP User Attribute Map
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_USER_ATTR_MAP"
+        value: "{{ ldap_user_attr_map }}"
+        validate_certs: false
+
+    - name: Set LDAP Group Search
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_GROUP_SEARCH"
+        value: "{{ ldap_group_search }}"
+        validate_certs: false
+
+    - name: Set LDAP Group Type
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_GROUP_TYPE"
+        value: "{{ ldap_group_type }}"
+        validate_certs: false
+
+    - name: Set LDAP Group Type Parameters
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_GROUP_TYPE_PARAMS"
+        value: "{{ ldap_group_type_params }}"
+        validate_certs: false
+
+    - name: Set LDAP Require Group
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_REQUIRE_GROUP"
+        value: "{{ ldap_require_group }}"
+        validate_certs: false
+
+    - name: Set LDAP Deny Group
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_DENY_GROUP"
+        value: "{{ ldap_deny_group }}"
+        validate_certs: false
+
+    - name: Set LDAP User Flags by Group
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: "AUTH_LDAP_USER_FLAGS_BY_GROUP"
+        value: "{{ ldap_user_flags_by_group }}"
+        validate_certs: false
+
+    - name: Ensure LDAP configuration block completed
+      debug:
+        msg: "LDAP configuration block execution completed."
+
+  rescue:
+    - name: Handle any failures in LDAP setup
+      debug:
+        msg: "An error occurred while setting LDAP settings in AWX."
+
+  when: set_ldap is defined and set_ldap | bool
