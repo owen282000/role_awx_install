@@ -20,16 +20,6 @@ secretGenerator:
     - tls.key
 {% endif %}
 
-- name: awx-postgres-configuration
-  type: Opaque
-  literals:
-    - host=awx-postgres-15
-    - port=5432
-    - database=awx
-    - username=awx
-    - password={{ awx_db_password }}
-    - type=managed
-
 - name: awx-admin-password
   type: Opaque
   literals:

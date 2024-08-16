@@ -13,7 +13,6 @@ persistent_container_storage_dir: "/srv/containers"  # Directory where persisten
 ###############################################################################
 awx_admin_user: "admin"                  # Admin user of AWX
 awx_db_user: "awx"                       # Database user of AWX
-awx_db_password: "password"        # Database password of AWX
 awx_db_name: "awx"                       # Database name of AWX
 
 ###############################################################################
