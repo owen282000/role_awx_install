@@ -26,22 +26,31 @@
       when: logo_source == 'file'
 
     - block:
+        - name: Extract the filename from URL
+          ansible.builtin.set_fact:
+            logo_filename: "{{ logo_url | basename }}"
+  
         - name: Download the logo from the URL
           ansible.builtin.get_url:
             url: "{{ logo_url }}"
-            dest: "/tmp/downloaded_logo.png"
+            dest: "/tmp/{{ logo_filename }}"
             mode: '0644'
           register: downloaded_logo
 
+        - name: Validate downloaded logo file format (must be PNG, GIF, or JPG/JPEG)
+          ansible.builtin.assert:
+            that:
+              - logo_filename | regex_search('\.(png|gif|jpe?g)$')
+            fail_msg: "The downloaded logo file must be a PNG, GIF, or JPG/JPEG."
+  
         - name: Read the Base64 encoded logo from downloaded URL
           ansible.builtin.slurp:
-            src: "/tmp/downloaded_logo.png"
+            src: "/tmp/{{ logo_filename }}"
           register: encoded_logo_content
-          delegate_to: localhost
 
         - name: Clean up downloaded logo file
           ansible.builtin.file:
-            path: "/tmp/downloaded_logo.png"
+            path: "/tmp/{{ logo_filename }}"
             state: absent
       when: logo_source == 'url'
 
@@ -54,14 +63,13 @@
         value: "data:image/png;base64,{{ encoded_logo_content['content'] }}"
         validate_certs: false
 
+    - name: End of logo setup block
+      debug:
+        msg: "Logo setup process has completed successfully."
+
   rescue:
     - name: Handle any failures in the logo setup process
       debug:
         msg: "An error occurred during the logo setup process."
-
-  always:
-    - name: End of logo setup block
-      debug:
-        msg: "Logo setup process has completed."
 
   when: set_logo is defined and set_logo | bool
