@@ -1,3 +1,4 @@
+---
 - name: Remove backup tar files from local storage
   ansible.builtin.file:
     path: "{{ item }}"
@@ -16,3 +17,4 @@
   ansible.builtin.file:
     path: "/tmp/awx"
     state: absent
+...

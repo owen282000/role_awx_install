@@ -205,6 +205,14 @@
   ansible.builtin.wait_for:
     timeout: 60
 
+- name: Wait for AWX port to be open
+  ansible.builtin.wait_for:
+    host: "{{ ansible_default_ipv4.address }}"
+    port: "{{ awx_service_port }}"
+    delay: 10
+    timeout: 300
+    state: started
+
 - name: Check if AWX is in migration state
   ansible.builtin.uri:
     url: "{{ awx_base_url }}/"
@@ -216,11 +224,9 @@
   delay: 30
   until: "'AWX Upgrading' not in page_content.content"
 
-- name: Get AWX API Token
-  include_tasks: awx_api.yml
-
 - name: Set AWX Settings
   include_tasks: awx_settings.yml
 
 - name: Cleanup temporary files and resources
   include_tasks: cleanup.yml
+...

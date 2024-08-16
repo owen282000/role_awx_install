@@ -1,7 +1,9 @@
+---
 - name: Read the Base64 encoded logo file
   ansible.builtin.slurp:
     src: "{{ logo_file_path }}"
   register: encoded_logo_content
+  delegate_to: localhost
 
 - name: Set the custom logo in AWX
   awx.awx.settings:
@@ -11,15 +13,4 @@
     name: CUSTOM_LOGO
     value: "data:image/png;base64,{{ encoded_logo_content['content'] }}"
     validate_certs: no
-
-- name: Verify logo has been updated
-  awx.awx.settings:
-    controller_host: "{{ awx_base_url }}"
-    controller_username: "{{ awx_admin_user }}"
-    controller_password: "{{ awx_admin_password }}"
-    name: CUSTOM_LOGO
-  register: logo_settings
-
-- name: Show the updated logo setting
-  debug:
-    var: logo_settings
+...
