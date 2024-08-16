@@ -1,16 +1,67 @@
 ---
-- name: Read the Base64 encoded logo file
-  ansible.builtin.slurp:
-    src: "{{ logo_file_path }}"
-  register: encoded_logo_content
-  delegate_to: localhost
+- name: AWX Logo Configuration Block
+  block:
+    - name: Determine source of the logo (local or URL)
+      ansible.builtin.set_fact:
+        logo_source: "{{ 'url' if logo_url is defined else 'file' }}"
 
-- name: Set the custom logo in AWX
-  awx.awx.settings:
-    controller_host: "{{ awx_base_url }}"
-    controller_username: "{{ awx_admin_user }}"
-    controller_password: "{{ awx_admin_password }}"
-    name: CUSTOM_LOGO
-    value: "data:image/png;base64,{{ encoded_logo_content['content'] }}"
-    validate_certs: no
-...
+    - block:
+        - name: Check if local logo file exists
+          ansible.builtin.stat:
+            path: "{{ logo_file_path }}"
+          register: logo_file
+          delegate_to: localhost
+
+        - name: Fail if the local logo file does not exist
+          ansible.builtin.fail:
+            msg: "The local logo file '{{ logo_file_path }}' does not exist. Please ensure the logo is available in the resources directory."
+          when:
+            - logo_file.stat.exists == false
+
+        - name: Read the Base64 encoded logo from file
+          ansible.builtin.slurp:
+            src: "{{ logo_file_path }}"
+          register: encoded_logo_content
+          delegate_to: localhost
+      when: logo_source == 'file'
+
+    - block:
+        - name: Download the logo from the URL
+          ansible.builtin.get_url:
+            url: "{{ logo_url }}"
+            dest: "/tmp/downloaded_logo.png"
+            mode: '0644'
+          register: downloaded_logo
+
+        - name: Read the Base64 encoded logo from downloaded URL
+          ansible.builtin.slurp:
+            src: "/tmp/downloaded_logo.png"
+          register: encoded_logo_content
+          delegate_to: localhost
+
+        - name: Clean up downloaded logo file
+          ansible.builtin.file:
+            path: "/tmp/downloaded_logo.png"
+            state: absent
+      when: logo_source == 'url'
+
+    - name: Set the custom logo in AWX
+      awx.awx.settings:
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        name: CUSTOM_LOGO
+        value: "data:image/png;base64,{{ encoded_logo_content['content'] }}"
+        validate_certs: false
+
+  rescue:
+    - name: Handle any failures in the logo setup process
+      debug:
+        msg: "An error occurred during the logo setup process."
+
+  always:
+    - name: End of logo setup block
+      debug:
+        msg: "Logo setup process has completed."
+
+  when: set_logo is defined and set_logo | bool

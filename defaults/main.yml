@@ -19,4 +19,7 @@ k3s_install: false # Set to true to install k3s
 delete_ns: false  # Set to true to delete the namespace and persistent volumes before redeploying
 
 # AWX Settings
-logo_file_path: "{{ role_path }}/resources/logo.png"
+set_logo: "true"
+logo_file_path: "{{ base_dir }}/resources/logo.png"
+# logo_url: "https://example.com/path/to/logo.png"  # Optional, uncomment to use URL instead
+...
