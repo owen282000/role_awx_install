@@ -201,5 +201,11 @@
       AWX URL: {{ awx_base_url }}
       Credentials saved in /tmp/awx_access_details.txt 
 
+- name: Get AWX API Token
+  include_tasks: awx_api.yml
+
+- name: Set AWX Settings
+  include_tasks: awx_settings.yml
+
 - name: Cleanup temporary files and resources
   include_tasks: cleanup.yml
