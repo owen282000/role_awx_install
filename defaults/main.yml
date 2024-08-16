@@ -18,9 +18,25 @@ k3s_install: false # Set to true to install k3s
 # Namespace deletion
 delete_ns: false  # Set to true to delete the namespace and persistent volumes before redeploying
 
+# AWX Setup
+set_projects: "true"
+
+projects:
+  - name: "Project A"
+    description: "Description for Project A"
+    organization: "Organization A"
+    scm_type: "git"
+    scm_url: "https://github.com/oVogEnt/ubuntu-hardening.git"
+    scm_branch: "main"
+  - name: "Project B"
+    description: "Description for Project B"
+    organization: "Organization B"
+    scm_type: "manual"
+    local_path: "test"    # Has to be the direcotry name in {{ persistent_container_storage_dir }}/projects/*; only applicable when scm_type: "manual"
+
 # AWX Settings
-set_logo: "true"
-set_login_info: "true"
+set_logo: "false"
+set_login_info: "false"
 set_ldap: "false"
 
 logo_file_path: "{{ base_dir }}/resources/logo.png"
