@@ -73,3 +73,13 @@
         msg: "An error occurred during the logo setup process."
 
   when: set_logo is defined and set_logo | bool
+
+- name: Set the custom login info in AWX
+  awx.awx.settings:
+    controller_host: "{{ awx_base_url }}"
+    controller_username: "{{ awx_admin_user }}"
+    controller_password: "{{ awx_admin_password }}"
+    name: CUSTOM_LOGIN_INFO
+    value: "{{ custom_login_info_content }}"
+    validate_certs: false
+  when: set_login_info is defined and set_login_info | bool
