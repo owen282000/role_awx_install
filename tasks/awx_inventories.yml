@@ -12,6 +12,20 @@
         controller_password: "{{ awx_admin_password }}"
         validate_certs: false
       loop: "{{ inventories }}"
+    
+    - name: "Add hosts to inventory"
+      awx.awx.host:
+        name: "{{ host.name }}"
+        inventory: "{{ item.name }}"
+        variables: "{{ host.vars | default(omit) }}"
+        state: present
+        controller_host: "{{ awx_base_url }}"
+        controller_username: "{{ awx_admin_user }}"
+        controller_password: "{{ awx_admin_password }}"
+        validate_certs: false
+      loop: "{{ inventories }}"
+      with_items: "{{ hosts | selectattr('inventory', 'equalto', item.name) }}"
+      when: item.inventory_source_name is not defined or item.inventory_source_name == ""
 
     - name: "Configure inventory source"
       awx.awx.inventory_source:
@@ -30,6 +44,7 @@
         controller_password: "{{ awx_admin_password }}"
         validate_certs: false
       loop: "{{ inventories }}"
+      when: item.inventory_source_name is defined and item.inventory_source_name != ""
 
     - name: "Sync inventory source if configured"
       awx.awx.inventory_source_update:

@@ -103,13 +103,21 @@ inventories:
   - name: "Inventory B"
     description: "Description for Inventory B"
     organization: "Default"
-    inventory_source_name: "Source for Inventory B"
-    source_project: "Project B"
-    source_path: "hosts.ini"
-    overwrite: true
-    update_on_launch: true
-    sync_on_create: true  # Optional, sync inventory after creation
-    update_cache_timeout: 7200  # Set cache timeout in seconds
+    # This inventory does not have an inventory source, so hosts will be added manually
+    sync_on_create: false
+
+hosts:
+  - name: "host1"
+    inventory: "Inventory B"  # This host will be added to Inventory B
+    vars:
+      ansible_host: "192.168.1.10"
+      ansible_user: "root"
+
+  - name: "host2"
+    inventory: "Inventory B"
+    vars:
+      ansible_host: "192.168.1.11"
+      ansible_user: "root"
 
 ###############################################################################
 # AWX Customization Settings
