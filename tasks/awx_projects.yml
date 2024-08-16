@@ -17,6 +17,7 @@
         controller_password: "{{ awx_admin_password }}"
         validate_certs: false
       loop: "{{ projects }}"
+      failed_when: "'local_path' in ansible_facts and 'already being used' not in ansible_facts.msg"
 
     - name: "Print success message for each project"
       debug:
