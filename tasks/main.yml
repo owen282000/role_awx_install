@@ -227,6 +227,9 @@
 - name: Set AWX Settings
   include_tasks: awx_settings.yml
 
+- name: Set AWX Credentials
+  include_tasks: awx_credentials.yml
+  
 - name: Set AWX Projects
   include_tasks: awx_projects.yml
 

@@ -1,24 +1,71 @@
 ---
 # defaults file for role_awx_install
 
-# General variables
-awx_namespace: "awx"  # Namespace where AWX will be deployed
-install_dir: "/tmp/awx"  # Location where files will be stored
+###############################################################################
+# General Configuration
+###############################################################################
+awx_namespace: "awx"                     # Namespace where AWX will be deployed
+install_dir: "/tmp/awx"                  # Location where files will be stored
 persistent_container_storage_dir: "/srv/containers"  # Directory where persistent storage will be mounted
-awx_admin_user: "admin" # Admin user of AWX
-awx_db_user: "awx" # Database user of AWX
-awx_db_name: "awx" # Database name of AWX
 
-# AWX Operator version
-#awx_operator_version: "2.19.1"  # Version of the AWX Operator to be installed // Not defined means latest
+###############################################################################
+# AWX Administrator Configuration
+###############################################################################
+awx_admin_user: "admin"                  # Admin user of AWX
+awx_db_user: "awx"                       # Database user of AWX
+awx_db_name: "awx"                       # Database name of AWX
 
-# K3S Install
-k3s_install: false # Set to true to install k3s
+###############################################################################
+# AWX Operator Configuration
+###############################################################################
+# awx_operator_version: "2.19.1"         # Version of the AWX Operator to be installed (latest if undefined)
 
-# Namespace deletion
-delete_ns: false  # Set to true to delete the namespace and persistent volumes before redeploying
+###############################################################################
+# K3S Installation Configuration
+###############################################################################
+k3s_install: false                       # Set to true to install k3s
 
-# AWX Setup
+###############################################################################
+# Namespace Deletion Configuration
+###############################################################################
+delete_ns: false                         # Set to true to delete the namespace and persistent volumes before redeploying
+
+###############################################################################
+# AWX Credential Setup
+###############################################################################
+set_credentials: "true"
+
+credentials:
+  - name: "GitHub Access Token"
+    description: "Token to access private GitHub repositories"
+    organization: "Default"
+    credential_type: "Source Control"
+    inputs:
+      username: "git"
+      ssh_key_unlock: "ghp_example12345"
+
+  - name: "Vault Password"
+    description: "Password to decrypt ansible vault"
+    organization: "Default"
+    credential_type: "Vault"
+    inputs:
+      vault_password: "password"
+
+  - name: "SSH for Servers"
+    description: "SSH Root User"
+    organization: "Default"
+    credential_type: "Machine"
+    inputs:
+      username: "root"
+      password: "password"
+      # ssh_key_data: |
+      #   -----BEGIN OPENSSH PRIVATE KEY-----
+      #   example_ssh_key_data
+      #   -----END OPENSSH PRIVATE KEY-----
+
+###############################################################################
+# AWX Project Setup
+###############################################################################
 set_projects: "true"
 
 projects:
@@ -28,20 +75,25 @@ projects:
     scm_type: "git"
     scm_url: "https://github.com/oVogEnt/ubuntu-hardening.git"
     scm_branch: "main"
+
   - name: "Project B"
     description: "Description for Project B"
     organization: "Default"
     scm_type: "manual"
-    local_path: "test"    # Has to be the direcotry name in {{ persistent_container_storage_dir }}/projects/*; only applicable when scm_type: "manual"
+    local_path: "test"    # Has to be the directory name in {{ persistent_container_storage_dir }}/projects/*; only applicable when scm_type: "manual"
 
-# AWX Settings
-set_logo: "false"
-set_login_info: "false"
-set_ldap: "false"
+###############################################################################
+# AWX Customization Settings
+###############################################################################
+set_logo: "false"                        # Set to true to configure custom logo
+set_login_info: "false"                  # Set to true to configure custom login information
+set_ldap: "false"                        # Set to true to configure LDAP settings
 
+# Logo Configuration
 logo_file_path: "{{ base_dir }}/resources/logo.png"
-#logo_url: "https://example.com/path/to/logo.png"  # Optional, uncomment to use URL instead
+# logo_url: "https://example.com/path/to/logo.png"  # Optional, uncomment to use URL instead
 
+# Custom Login Information Configuration
 custom_login_info_content: |
   <div style="text-align:center; font-family: Arial, sans-serif; color: white;">
       <p style="font-size: 20px;">
@@ -49,30 +101,39 @@ custom_login_info_content: |
       </p>
   </div>
 
-# LDAP Settings
-ldap_server_uri: "ldaps://your-ldap-server.com:636" # Or "ldap://your-ldap-server.com:389"
+###############################################################################
+# LDAP Configuration
+###############################################################################
+ldap_server_uri: "ldaps://your-ldap-server.com:636"  # Or "ldap://your-ldap-server.com:389"
 ldap_bind_dn: "uid=awx,cn=sysaccounts,cn=etc,dc=yourdomain,dc=com"
 ldap_bind_password: "your_bind_password"
 ldap_start_tls: false
-ldap_connection_options: 
+
+ldap_connection_options:
   OPT_REFERRALS: 0
   OPT_NETWORK_TIMEOUT: 30
+
 ldap_user_dn_template: "uid=%(user)s,cn=users,cn=accounts,dc=yourdomain,dc=com"
+
 ldap_user_attr_map:
   email: "mail"
   last_name: "sn"
   first_name: "givenName"
-ldap_group_search: 
+
+ldap_group_search:
   - "cn=groups,cn=accounts,dc=yourdomain,dc=com"
   - "SCOPE_SUBTREE"
   - "(objectClass=groupOfNames)"
+
 ldap_group_type: "MemberDNGroupType"
 ldap_group_type_params:
   member_attr: "member"
   name_attr: "cn"
+
 ldap_require_group: "cn=required_group,cn=groups,cn=accounts,dc=yourdomain,dc=com"
 ldap_deny_group: null
+
 ldap_user_flags_by_group:
-  is_superuser: 
+  is_superuser:
     - "cn=admin_group,cn=groups,cn=accounts,dc=yourdomain,dc=com"
-...
+
