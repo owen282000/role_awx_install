@@ -20,7 +20,7 @@ awx_db_name: "awx"                       # Database name of AWX
 # AWX Ingress Configuration
 ###############################################################################
 awx_use_cname: "false"
-#awx_cname: "awx.local.lan"
+awx_cname: "awx.local.lan"
 
 ###############################################################################
 # AWX Operator Configuration

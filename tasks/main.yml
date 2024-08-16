@@ -105,6 +105,12 @@
     version: "tags/{{ awx_operator_version }}"
     force: yes
 
+- name: Generate self signed cert
+  ansible.builtin.command:
+    cmd: 'openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out {{ install_dir }}/awx/kustomize/tls.crt -keyout {{ install_dir }}/awx/kustomize/tls.key -subj "/CN={{ awx_cname }}/O={{ awx_cname }}" -addext "subjectAltName = DNS:{{ awx_cname }}"'
+    creates: "{{ install_dir }}/awx/kustomize/tls.crt"
+  when: awx_use_cname
+
 - name: Create Kubernetes namespace for AWX
   kubernetes.core.k8s:
     state: present
@@ -129,12 +135,6 @@
   delay: 30
   register: awx_operator_ready
   until: awx_operator_ready is success
-
-- name: Generate self signed cert
-  ansible.builtin.command:
-    cmd: 'openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -out {{ bastion_install_dir }}/awx/kustomize/tls.crt -keyout {{ bastion_install_dir }}/awx/kustomize/tls.key -subj "/CN={{ awx_cname }}/O={{ awx_cname }}" -addext "subjectAltName = DNS:{{ awx_cname }}"'
-    creates: "{{ bastion_install_dir }}/awx/kustomize/tls.crt"
-  when: awx_use_cname
 
 - name: Copy kustomization files
   ansible.builtin.template:
