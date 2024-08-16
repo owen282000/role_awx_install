@@ -2,8 +2,12 @@
 - Add SUSE
 - Add RKE2
 - Update README
-- Delete Default resources
+- Delete Demo resources
 - Hosts to separate file, add groups to that
 - Test LDAP
 - Test CNAME
   - When awx_use_cname is true, awx_cname must be set
+- Add templates
+- Add workflows
+- Add execution environments
+- Add schedules
